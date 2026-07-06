@@ -2,6 +2,7 @@ import express from "express";
 import {connectRedis} from "./config/redisClient.js";
 import router from "./routes/apiRoutes.js";
 import rateLimiter from "./middleware/ratelimiter.js";
+import { loadRedisScripts } from "./redis/scriptLoader.js";
 import {fileURLToPath} from "url";
 
 const app = express();
@@ -15,6 +16,7 @@ app.use("/api", router);
 
 async function startServer() {
       await connectRedis();
+      await loadRedisScripts();
 
     app.listen(3000, () => {
         console.log("Server running on 3000");

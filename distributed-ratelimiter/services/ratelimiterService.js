@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import path from "path";
 import redisService from "../redis/redisService.js";
 import { randomUUID } from "crypto";
+import { registerScript, getScriptSha, getScript } from "../redis/scriptRegistry.js";
 
 const rateLimitScript = readFileSync(
     path.join(import.meta.dirname, "../scripts/ratelimitter.lua"),
@@ -13,12 +14,11 @@ const maxRequests = 5; // Maximum requests allowed in the window
 
 export async function checkRateLimit(ip) {
     try {
-        const key = `rate_limit:${ip}`;
-        const now = Date.now();
-        const member = randomUUID(); // Unique identifier for the request
-
-        const result = await redisService.eval(
-            rateLimitScript,
+        let key = `rate_limit:${ip}`;
+        let now = Date.now();
+        let member = randomUUID(); // Unique identifier for the request
+        const result = await redisService.executeScript(
+            'ratelimitter',
             [key],
             [now.toString(), windowSizeInMs.toString(), maxRequests.toString(), member]
         );

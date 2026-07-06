@@ -1,4 +1,5 @@
 import {redisClient as client } from "../config/redisClient.js";
+import { getScript, getScriptInfo } from "./scriptRegistry.js";
 
 class RedisService {
 
@@ -27,6 +28,47 @@ class RedisService {
             arguments: args,
         });
     }
+
+    async loadScript(script) {
+        return client.scriptLoad(script);
+    }
+
+    async evalSha(sha, keys, args) {
+        return client.evalSha(sha, {
+            keys,
+            arguments: args,
+        });
+    }
+
+    async executeScript(scriptName, keys, args) {
+
+    const scriptInfo = getScriptInfo(scriptName);
+
+    if (!scriptInfo) {
+        throw new Error(`Lua script '${scriptName}' not found.`);
+    }
+
+    try {
+
+        return await this.evalSha(scriptInfo.sha, keys, args);
+
+    } catch (err) {
+
+        if (!err.message.startsWith("NOSCRIPT")) {
+            throw err;
+        }
+
+        console.log(`Reloading ${scriptName}...`);
+
+        const newSha = await this.loadScript(scriptInfo.script);
+
+        updateSha(scriptName, newSha);
+
+        return await this.evalSha(newSha, keys, args);
+
+    }
+
+}
 
 }
 export default new RedisService();
