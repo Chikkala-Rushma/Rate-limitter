@@ -14,9 +14,9 @@ const maxRequests = 5; // Maximum requests allowed in the window
 
 export async function checkRateLimit(ip) {
     try {
-        let key = `rate_limit:${ip}`;
-        let now = Date.now();
-        let member = randomUUID(); // Unique identifier for the request
+        const key = `rate_limit:${ip}`;
+        const now = Date.now();
+        const member = randomUUID(); // Unique identifier for the request
         const result = await redisService.executeScript(
             'ratelimitter',
             [key],
